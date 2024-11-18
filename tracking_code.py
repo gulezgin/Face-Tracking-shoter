@@ -38,7 +38,7 @@ def angle_servo(angle):
         servo_rotate_serialdata(1, prov)
 
 # Haar Cascade sınıflandırıcıyı yükle
-face_cascade = cv2.CascadeClassifier(r'C:\Python27\libs\haarcascade_frontalface_default.xml')
+face_cascade = cv2.CascadeClassifier(r'...\haarcascade_frontalface_default.xml')
 
 # Video yakalama aygıtını başlat
 video_capture = cv2.VideoCapture(0)
