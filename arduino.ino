@@ -1,59 +1,62 @@
-//header...call function library
 #include <Servo.h> 
 
+// Servo kontrol nesnesi
 Servo servo;
 
-// User input for servo and position
-int UserIn[3];    // raw input from serial buffer, 3 bytes
-int ini_byt;       // start byte, begin reading input//initial byte
-int servo_num;           // which servo to pulse?
-int pos;             // servo angle 0-180
-int i;               // iterator
-int t=90;    //variable to move to according angle
+// Kullanıcıdan gelen veri için değişkenler
+const int START_BYTE = 255;  // Veri paketinin başlangıç baytı
+int userInput[2];            // Gelen veri paketinin 2 baytlık kısmı
+int servoAngle = 90;         // Servo motorun başlangıç açısı (orta pozisyon)
 
+// Servo pals aralığı (mikrosaniye)
+const int MIN_PULSE = 600;   // Minimum servo pals genişliği
+const int MAX_PULSE = 2400;  // Maksimum servo pals genişliği
 
-// Common servo setup values
-int mini_Pul = 600;   // minimum servo position, us (microseconds)
-int maxi_Pul = 2400;  // maximum servo position, us
-
-
+// Seri bağlantı hızı
+const int BAUD_RATE = 9600;  // Seri bağlantı hızı (bps)
 
 void setup() 
 {   
-  servo.attach(9, mini_Pul, maxi_Pul); // Attach each Servo object to a digital pin
-  Serial.begin(9600); // Open the serial connection, 9600 baud
+    // Servo motoru 9. pine bağla ve pals genişliğini ayarla
+    servo.attach(9, MIN_PULSE, MAX_PULSE);
+    // Seri iletişimi başlat
+    Serial.begin(BAUD_RATE); 
 } 
-
-
 
 void loop() 
 { 
-  if (Serial.available() > 2) // Wait for serial input (min 3 bytes in buffer)
+    // Seri portta en az 3 baytlık veri varsa işleme başla
+    if (Serial.available() >= 3) 
     {
-      ini_byt = Serial.read();// Read the first byte
-      if (ini_byt == 255) // If it's really the startbyte (255) ...
-         {
-          for (i=0;i<2;i++) // ... then get the next two bytes
-              {
-                UserIn[i] = Serial.read();
-              }
-          servo_num = UserIn[0];// First byte = servo to move?          
-          pos = UserIn[1];// Second byte = which position?          
-          if (pos == 255) // Packet error checking and recovery
-              { 
-                servo_num = 255; 
-              }
-          if (pos==1)
-            {
-              t=t+3;
-              servo.write(t); 
-            }
-         else if (pos==2)
-           {
-             t=t-3;
-             servo.write(t);
-         
-           }  
-         }
+        // Veri paketinin başlangıç baytını oku
+        int startByte = Serial.read();
+
+        // Başlangıç baytı doğruysa devam et
+        if (startByte == START_BYTE) 
+        {
+            // Kullanıcıdan gelen 2 baytlık veriyi oku
+            userInput[0] = Serial.read(); // Servo numarası (tek servo olduğu için kullanılmıyor)
+            userInput[1] = Serial.read(); // Hedef pozisyon komutu
+            
+            // Pozisyon komutunu işle
+            handlePositionCommand(userInput[1]);
+        }
+    }
+}
+
+// Pozisyon komutlarını işleyen yardımcı fonksiyon
+void handlePositionCommand(int positionCommand)
+{
+    if (positionCommand == 1) 
+    {
+        // Açıyı 3 derece artır ve sınırları aşmamasını sağla
+        servoAngle = constrain(servoAngle + 3, 0, 180);
+        servo.write(servoAngle);
+    } 
+    else if (positionCommand == 2) 
+    {
+        // Açıyı 3 derece azalt ve sınırları aşmamasını sağla
+        servoAngle = constrain(servoAngle - 3, 0, 180);
+        servo.write(servoAngle);
     }
 }
