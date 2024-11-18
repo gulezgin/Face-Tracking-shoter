@@ -1,45 +1,55 @@
-## this program is based on the haar_cascade classifier which are based on  Viola and Jones algorithm
-## __author__ = 'Brindal Patel'
-## this program is creating database of the detected face during real time
-
-
 import numpy as np
 import cv2
-#import Image
 
+# Fonksiyon: Algılanan yüzün etrafına dikdörtgen çiz
+def create_box(a, b, c, d):
+    cv2.rectangle(imag, (a, b), (a + c, b + d), (0, 255, 0), 2)
 
-# this function will create the box arround the detcted face
-def create_box(a,b,c,d):
-    cv2.rectangle(imag,(a,b),(a+c,b+d),(0,255,0),2)
+# Fonksiyon: Değişkeni artır
+def variable_iteration(l):
+    return l + 1
 
-def variable_itteration(l):
-    l=l+1
-    return(l)
+# Dosya isimlendirme için başlangıç numarası
+n = 140
 
-# number from where you want to start a name of the file
-n=140
+# Haar Cascade sınıflandırıcıyı yükle
+face_cascade = cv2.CascadeClassifier(r'...haarcascade_frontalface_default.xml')
 
-# this is usual path for windows user.
-face_casc = cv2.CascadeClassifier('C:\Python27\libs\haarcascade_frontalface_default.xml')
-
+# Kameradan video akışını başlat
 vid = cv2.VideoCapture(0)
-while (vid.isOpened()):
-    ret,imag = vid.read()
 
-    faces = face_casc.detectMultiScale(imag, 1.2, 5, minSize=(10,10),maxSize=(500,500))
-
-    for (x,y,w,h) in faces:
-        n=variable_itteration(n)
-        create_box(x,y,w,h)
-        save_image = imag[y:y+h, x:x+w] # cut out the face portion from image
-        cv2.imwrite("hey%d.png"%(n),save_image)
-        print n
-
-    cv2.imshow('image',imag)
-    k=cv2.waitKey(10) # escape key to exit
-    if k==27:
+while vid.isOpened():
+    ret, imag = vid.read()  # Kameradan görüntü oku
+    if not ret:
+        print("Kameradan görüntü alınamadı.")
         break
 
-# to close all the window
-cv2.waitKey(0)
+    # Yüzleri algıla
+    faces = face_cascade.detectMultiScale(
+        imag, 
+        scaleFactor=1.2, 
+        minNeighbors=5, 
+        minSize=(10, 10), 
+        maxSize=(500, 500)
+    )
+
+    # Algılanan her yüz için işlemleri gerçekleştir
+    for (x, y, w, h) in faces:
+        n = variable_iteration(n)  # İsimlendirme numarasını artır
+        create_box(x, y, w, h)     # Algılanan yüzün etrafına kutu çiz
+        save_image = imag[y:y+h, x:x+w]  # Yüz kısmını kes
+        cv2.imwrite(f"face_{n}.png", save_image)  # Kesilen yüzü kaydet
+        print(f"Kaydedilen dosya numarası: {n}")
+
+    # Görüntüyü ekranda göster
+    cv2.imshow('Detected Faces', imag)
+
+    # Çıkış için 'ESC' tuşuna basma kontrolü
+    k = cv2.waitKey(10)
+    if k == 27:  # ESC tuşu
+        print("Çıkış yapılıyor.")
+        break
+
+# Pencereyi ve video akışını kapat
+vid.release()
 cv2.destroyAllWindows()
